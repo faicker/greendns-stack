@@ -1,0 +1,37 @@
+version: "3.5"
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: "200k"
+    max-file: "10"
+
+services:
+  greendns:
+    depends_on:
+      - dnscrypt-proxy-2
+      - pdnsd
+    container_name: greendns
+    image: faicker/greendns:latest
+    env_file: greendns.env
+    restart: unless-stopped
+    network_mode: "host"
+    logging: *default-logging
+
+  dnscrypt-proxy-2:
+    container_name: dnscrypt-proxy
+    image: faicker/dnscrypt-proxy-2:latest
+    volumes:
+      - ./dnscrypt-proxy.toml:/config/dnscrypt-proxy.toml
+    restart: unless-stopped
+    network_mode: "host"
+    logging: *default-logging
+
+  pdnsd:
+    container_name: pdnsd
+    image: faicker/pdnsd:latest
+    volumes:
+      - ./pdnsd.conf:/etc/pdnsd.conf
+    restart: unless-stopped
+    network_mode: "host"
+    logging: *default-logging

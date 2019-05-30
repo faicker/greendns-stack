@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-#FIXME. both updated(pdnsd and dnscrypt-proxy-2) if one config changed.
+# for docker stack
+# FIXME. both updated(pdnsd and dnscrypt-proxy-2) if one config changed.
 
 service_name="$1"
 if [[ -z $service_name ]]; then
