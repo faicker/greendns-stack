@@ -1,30 +1,34 @@
-version: "3.5"
+version: "2.4"
 x-logging:
   &default-logging
   driver: "json-file"
   options:
     max-size: "200k"
     max-file: "10"
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: "198.19.20.200/29"
 
 services:
   greendns:
     depends_on:
-      - dnscrypt-proxy-2
       - pdnsd
+      - dnscrypt-proxy-2
     container_name: greendns
     image: faicker/greendns:latest
-    env_file: greendns.env
     restart: unless-stopped
-    network_mode: "host"
-    logging: *default-logging
-
-  dnscrypt-proxy-2:
-    container_name: dnscrypt-proxy
-    image: faicker/dnscrypt-proxy-2:latest
-    volumes:
-      - ./dnscrypt-proxy.toml:/config/dnscrypt-proxy.toml
-    restart: unless-stopped
-    network_mode: "host"
+    ports:
+      - "${HOST_SERVICE_LISTEN:-127.0.0.1:53}:5353/udp"
+    networks:
+      - default
+    environment:
+      - LDS=pdnsd:5453
+      - RDS=dnscrypt-proxy:5454
+      - CACHE=true
+      - RFC1918=true
+      - LISTEN=0.0.0.0:5353
     logging: *default-logging
 
   pdnsd:
@@ -33,5 +37,16 @@ services:
     volumes:
       - ./pdnsd.conf:/etc/pdnsd.conf
     restart: unless-stopped
-    network_mode: "host"
+    networks:
+      - default
+    logging: *default-logging
+
+  dnscrypt-proxy-2:
+    container_name: dnscrypt-proxy
+    image: faicker/dnscrypt-proxy-2:latest
+    volumes:
+      - ./dnscrypt-proxy.toml:/config/dnscrypt-proxy.toml:ro
+    restart: unless-stopped
+    networks:
+      - default
     logging: *default-logging

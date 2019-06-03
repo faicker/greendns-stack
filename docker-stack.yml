@@ -1,4 +1,22 @@
 version: "3.5"
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: "200k"
+    max-file: "10"
+configs:
+    dnscrypt-proxy:
+        name: dnscrypt-proxy-${DNSCRYPT-PROXY_CONFIG_VERSION:-0}
+        file: ./dnscrypt-proxy.toml
+    pdnsd:
+        name: pdnsd-${PDNSD_CONFIG_VERSION:-0}
+        file: ./pdnsd.conf
+networks:
+  hostnet:
+    external: true
+    name: host
+
 services:
   greendns:
     image: faicker/greendns:latest
@@ -11,12 +29,9 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
-    env_file: greendns.env
+    logging: *default-logging
+    env_file: .env
+
   dnscrypt-proxy-2:
     image: faicker/dnscrypt-proxy-2:latest
     configs:
@@ -29,11 +44,8 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
+    logging: *default-logging
+
   pdnsd:
     image: vimagick/pdnsd:latest
     configs:
@@ -46,19 +58,4 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "200k"
-        max-file: "10"
-configs:
-    dnscrypt-proxy:
-        name: dnscrypt-proxy-${DNSCRYPT-PROXY_CONFIG_VERSION:-0}
-        file: ./dnscrypt-proxy.toml
-    pdnsd:
-        name: pdnsd-${PDNSD_CONFIG_VERSION:-0}
-        file: ./pdnsd.conf
-networks:
-  hostnet:
-    external: true
-    name: host
+    logging: *default-logging
