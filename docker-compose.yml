@@ -5,27 +5,17 @@ x-logging:
   options:
     max-size: "200k"
     max-file: "10"
-networks:
-  default:
-    ipam:
-      config:
-        - subnet: "198.19.20.200/29"
 
 services:
   greendns:
-    depends_on:
-      - pdnsd
-      - dnscrypt-proxy-2
     container_name: greendns
     image: faicker/greendns:latest
     restart: unless-stopped
     ports:
-      - "${HOST_SERVICE_LISTEN:-127.0.0.1:53}:5353/udp"
-    networks:
-      - default
+      - "${DNS_LISTEN:-127.0.0.1:53}:5353/udp"
     environment:
-      - LDS=pdnsd:5453
-      - RDS=dnscrypt-proxy:5454
+      - LDS=127.0.0.1:5453
+      - RDS=127.0.0.1:5454
       - CACHE=true
       - RFC1918=true
       - LISTEN=0.0.0.0:5353
@@ -37,16 +27,15 @@ services:
     volumes:
       - ./pdnsd.conf:/etc/pdnsd.conf
     restart: unless-stopped
-    networks:
-      - default
+    network_mode: "service:greendns"
     logging: *default-logging
 
-  dnscrypt-proxy-2:
+  dnscrypt-proxy:
     container_name: dnscrypt-proxy
     image: faicker/dnscrypt-proxy-2:latest
     volumes:
       - ./dnscrypt-proxy.toml:/config/dnscrypt-proxy.toml:ro
     restart: unless-stopped
-    networks:
-      - default
+    network_mode: "service:greendns"
     logging: *default-logging
+
